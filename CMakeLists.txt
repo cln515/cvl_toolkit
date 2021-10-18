@@ -4,11 +4,15 @@ project(cvl_toolkit)
 
 add_library(${PROJECT_NAME}  STATIC
 	src/utility.cpp
+	src/config.cpp
 )
 
 include_directories(
 	include
 )
+
+find_package(nlohmann_json 3.2.0 REQUIRED)
+target_link_libraries(${PROJECT_NAME} nlohmann_json::nlohmann_json)
 
 find_package(Eigen3 REQUIRED)
 target_link_libraries(${PROJECT_NAME} Eigen3::Eigen)
@@ -22,6 +26,7 @@ install(TARGETS ${PROJECT_NAME}
 
 install(FILES 
 ${CMAKE_CURRENT_SOURCE_DIR}/include/utility.h
+${CMAKE_CURRENT_SOURCE_DIR}/include/config.h
 DESTINATION include)
 
 install(EXPORT cvl-toolkit_export
