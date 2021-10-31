@@ -1,5 +1,7 @@
 cmake_minimum_required (VERSION 3.10)
 
+set(CMAKE_CXX_FLAGS "-fpermissive -std=c++0x")
+
 project(cvl_toolkit)
 
 add_library(${PROJECT_NAME}  STATIC
