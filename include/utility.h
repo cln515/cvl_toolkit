@@ -54,4 +54,8 @@ namespace cvl_toolkit {
 		Eigen::Matrix3f faxisRot2R(double rx, double ry, double rz);
 	};
 
+	bool headString(std::string line, std:: string chara);
+	Eigen::Vector3d getNorm(Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d p3);
+	Eigen::Matrix4d getMatrixFlomPly(std::string fn);
+	void HSVAngle2Color(double radangle, unsigned char* rgb);
 };

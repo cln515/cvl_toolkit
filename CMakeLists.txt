@@ -5,6 +5,7 @@ project(cvl_toolkit)
 add_library(${PROJECT_NAME}  STATIC
 	src/utility.cpp
 	src/config.cpp
+	src/ply_object.cpp
 )
 
 include_directories(
@@ -27,6 +28,7 @@ install(TARGETS ${PROJECT_NAME}
 install(FILES 
 ${CMAKE_CURRENT_SOURCE_DIR}/include/utility.h
 ${CMAKE_CURRENT_SOURCE_DIR}/include/config.h
+${CMAKE_CURRENT_SOURCE_DIR}/include/ply_object.h
 DESTINATION include)
 
 install(EXPORT cvl-toolkit_export

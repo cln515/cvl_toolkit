@@ -186,26 +186,95 @@ namespace cvl_toolkit {
 		};
 	};
 
+	bool headString(std::string line, std::string chara) {
+		if (line.find(chara) == 0)return true;
+		else return false;
+	}
+
+	Eigen::Vector3d getNorm(Eigen::Vector3d p1, Eigen::Vector3d p2, Eigen::Vector3d p3) {
+		double v1x = p2(0) - p1(0), v1y = p2(1) - p1(1), v1z = p2(2) - p1(2),
+			v2x = p3(0) - p2(0), v2y = p3(1) - p2(1), v2z = p3(2) - p2(2);
+		Eigen::Vector3d nc_;
+		Eigen::Vector3d nc;
+		nc_(0) = v1y * v2z - v1z * v2y;
+		nc_(1) = v1z * v2x - v1x * v2z;
+		nc_(2) = v1x * v2y - v1y * v2x;
+		nc_.normalize();
+		nc(0) = nc_(0);
+		nc(1) = nc_(1);
+		nc(2) = nc_(2);
+		return nc;
+	};
 
 
+	Eigen::Matrix4d getMatrixFlomPly(std::string fn) {
+		std::ifstream ifs(fn, std::ios::binary);
+		std::string line;
+		Eigen::Matrix4d globalPose = Eigen::Matrix4d::Identity();
+		int n = 0;
+		while (getline(ifs, line)) {
+			//		ofs<<line<<endl;
+			std::cout << line << std::endl;
+			if (headString(line, "matrix")) {
+				float f[4];
+				int i;
+				for (i = 0; i < 5; i++) {
+					if (i != 0)f[i - 1] = stof(line.substr(0, line.find_first_of(" ")));
+					line.erase(0, line.find_first_of(" ") + 1);
+				}
+				globalPose(0, n) = f[0];
+				globalPose(1, n) = f[1];
+				globalPose(2, n) = f[2];
+				globalPose(3, n) = f[3];
+				n++;
+			}
+			if (headString(line, "end_header"))break;
+
+		}
+		ifs.close();
+		return globalPose;
+	}
+
+	void HSVAngle2Color(double radangle, unsigned char* rgb) {
+		double pi_sixtydig = M_PI / 3;
+		double angle = ((radangle / (M_PI * 2)) - floor((radangle / (M_PI * 2))))*(M_PI * 2);
+		if (angle >= 0 && angle < pi_sixtydig) {
+			double val = (angle - pi_sixtydig * 0) / pi_sixtydig;
+			rgb[0] = 255;
+			rgb[1] = 255 * val;
+			rgb[2] = 0;
+		}
+		else if (angle >= pi_sixtydig * 1 && angle < pi_sixtydig * 2) {
+			double val = (angle - pi_sixtydig * 1) / pi_sixtydig;
+			rgb[0] = 255 * (1 - val);
+			rgb[1] = 255;
+			rgb[2] = 0;
+		}
+		else if (angle >= pi_sixtydig * 2 && angle < pi_sixtydig * 3) {
+			double val = (angle - pi_sixtydig * 2) / pi_sixtydig;
+			rgb[0] = 0;
+			rgb[1] = 255;
+			rgb[2] = 255 * (val);
+		}
+		else if (angle >= pi_sixtydig * 3 && angle < pi_sixtydig * 4) {
+			double val = (angle - pi_sixtydig * 3) / pi_sixtydig;
+			rgb[0] = 0;
+			rgb[1] = 255 * (1 - val);
+			rgb[2] = 255;
+		}
+		else if (angle >= pi_sixtydig * 4 && angle < pi_sixtydig * 5) {
+			double val = (angle - pi_sixtydig * 4) / pi_sixtydig;
+			rgb[0] = 255 * (val);
+			rgb[1] = 0;
+			rgb[2] = 255;
+		}
+		else if (angle >= pi_sixtydig * 5 && angle < pi_sixtydig * 6) {
+			double val = (angle - pi_sixtydig * 5) / pi_sixtydig;
+			rgb[0] = 255;
+			rgb[1] = 0;
+			rgb[2] = 255 * (1 - val);
+		}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	}
 }
