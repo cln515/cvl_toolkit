@@ -24,6 +24,8 @@
 
 #endif
 
+#ifndef CVL_UTIL
+#define CVL_UTIL
 
 namespace cvl_toolkit {
 
@@ -59,3 +61,5 @@ namespace cvl_toolkit {
 	Eigen::Matrix4d getMatrixFlomPly(std::string fn);
 	void HSVAngle2Color(double radangle, unsigned char* rgb);
 };
+
+#endif
