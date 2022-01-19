@@ -34,6 +34,9 @@ namespace cvl_toolkit {
 #if defined(_WIN32) || defined(_WIN64)
 		__int64 facenum;
 		__int64 vertexnum;
+#elif defined(MAC_OSX)
+		long facenum;
+		long vertexnum;
 #elif defined(__unix__)
 		long facenum;
 		long vertexnum;
