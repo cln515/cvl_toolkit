@@ -52,6 +52,9 @@ namespace cvl_toolkit {
 		Eigen::Matrix3d axis_angle2mat(Eigen::Vector3d axis, double anglerad);
 
 		Eigen::Matrix3f faxisRot2R(double rx, double ry, double rz);
+
+		void panorama_pix2bearing(double u,double v,int imageWidth,int imageHeight,Eigen::Vector3d& ret);
+		void panorama_bearing2pix(Eigen::Vector3d bv,int imageWidth,int imageHeight,double&u,double& v);
 	};
 
 	bool headString(std::string line, std:: string chara);
