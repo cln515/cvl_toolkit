@@ -184,6 +184,19 @@ namespace cvl_toolkit {
 			Eigen::Matrix3f retMat = R.block(0, 0, 3, 3);
 			return retMat;
 		};
+
+		void panorama_pix2bearing(double u, double v,int imageWidth,int imageHeight, Eigen::Vector3d& ret) {
+			double theta = -(u*(M_PI * 2) / imageWidth - M_PI);
+			double phi = v / imageHeight * M_PI;
+			ret << sin(phi)*cos(theta), sin(phi)*sin(theta), cos(phi);
+		}
+		void panorama_bearing2pix(Eigen::Vector3d bv, int imageWidth, int imageHeight, double&u, double& v) {
+			double r = bv.norm();
+			double theta = atan2(bv(1), bv(0));
+			double phi = acos(bv(2) / r);
+			u = (-theta + M_PI)* imageWidth / (M_PI * 2);
+			v = phi / M_PI * imageHeight;
+		}
 	};
 
 	bool headString(std::string line, std::string chara) {
