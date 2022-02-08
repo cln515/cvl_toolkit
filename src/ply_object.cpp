@@ -399,11 +399,14 @@ namespace cvl_toolkit {
 	}
 
 	void plyObject::release() {
-		if (!bRead)return;
+		//if (!bRead)return;
 		free(verteces);
+		verteces = NULL;
 		free(norm);
+		norm = NULL;
 		free(reflectance);
-		bRead = false;
+		reflectance = NULL;
+		//bRead = false;
 
 	}
 
