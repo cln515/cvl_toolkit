@@ -1,6 +1,14 @@
 #include <pc_proc.h>
 
+namespace cv
+{
 
+	template<typename T> struct greaterThanPtr
+	{
+		bool operator()(const T* a, const T* b) const { return *a > *b; }
+	};
+
+}
 
 namespace cvl_toolkit {
 
@@ -160,7 +168,173 @@ namespace cvl_toolkit {
 	};
 
 
+	void goodFeatureToTrack_onProjection(cv::Mat image, std::vector<cv::Point2f> proj_points, std::vector<int>& selectedIdx, double minDistance, int maxCorners, double cornerThres) {
+		cv::Mat eig, tmp;
+		cv::cornerHarris(image, eig, 3, 5, 0.04);//corner calculation
+		cv::Mat tmpMask = cv::Mat::zeros(image.rows, image.cols, CV_8U);
+		std::map<unsigned int, int> point_idx;
+		std::map<unsigned int, double> point_dist;
+		for (int j = 0; j < proj_points.size(); j++) {
+			cv::Point2f p = proj_points.at(j);
+			unsigned int pint = ((int)p.x) + ((int)p.y)*image.cols;;
+			tmpMask.at<uchar>(p) = 255;//remove mask on projected point
+			double cendx = p.x - (int)p.x - 0.5;
+			double cendy = p.y - (int)p.y - 0.5;
+			double distcenter = cendx * cendx + cendy * cendy;
+			auto itr = point_dist.find(pint);
+			if (itr == point_dist.end() || itr->second > distcenter) {
+				point_dist.insert(std::map<unsigned int, double>::value_type(pint, distcenter));
+				point_idx.insert(std::map<unsigned int, int>::value_type(pint, j));
+			}
+		}
 
+		cv::dilate(tmpMask, tmpMask, cv::Mat());//expansion non-masked area
+		double maxVal;
+		//non-maxima suppression
+		cv::minMaxLoc(eig, 0, &maxVal, 0, 0, tmpMask);
+		//cv::threshold(eig, eig, maxVal*1e-12, 0, cv::THRESH_TOZERO);
+		cv::dilate(eig, tmp, cv::Mat());
+
+		cv::Size imgsize = image.size();
+
+		std::vector<const float*> tmpCorners;
+
+		// collect list of pointers to features - put them into temporary image
+		for (int y = 1; y < imgsize.height - 1; y++)
+		{
+			const float* eig_data = (const float*)eig.ptr(y);
+			const float* tmp_data = (const float*)tmp.ptr(y);
+			const uchar* mask_data = tmpMask.data ? tmpMask.ptr(y) : 0;
+
+			for (int x = 1; x < imgsize.width - 1; x++)
+			{
+				float val = eig_data[x];
+				if (val >= maxVal * cornerThres /*&& val == tmp_data[x]*/ && (!mask_data || mask_data[x]))
+					tmpCorners.push_back(eig_data + x);
+			}
+		}
+		//cv::sort(tmpCorners,tmpCorners,CV_SORT_DESCENDING);
+		std::sort(tmpCorners.begin(), tmpCorners.end(), [](const float*& a, const float*& b) {return (*a) >= (*b); });
+
+		std::vector<cv::Point2f> corners;
+		size_t i, j, total = tmpCorners.size(), ncorners = 0;
+		if (minDistance >= 1)
+		{
+			// Partition the image into larger grids
+			int w = image.cols;
+			int h = image.rows;
+
+			const int cell_size = cvRound(minDistance);
+			const int grid_width = (w + cell_size - 1) / cell_size;
+			const int grid_height = (h + cell_size - 1) / cell_size;
+
+			std::vector<std::vector<cv::Point2f> > grid(grid_width*grid_height);
+
+			minDistance *= minDistance;
+
+			for (i = 0; i < total; i++)
+			{
+				int ofs = (int)((const uchar*)tmpCorners[i] - eig.data);
+				int y = (int)(ofs / eig.step);
+				int x = (int)((ofs - y * eig.step) / sizeof(float));
+
+				bool good = true;
+
+				int x_cell = x / cell_size;
+				int y_cell = y / cell_size;
+
+				int x1 = x_cell - 1;
+				int y1 = y_cell - 1;
+				int x2 = x_cell + 1;
+				int y2 = y_cell + 1;
+
+				// boundary check
+				x1 = std::max(0, x1);
+				y1 = std::max(0, y1);
+				x2 = std::min(grid_width - 1, x2);
+				y2 = std::min(grid_height - 1, y2);
+
+				for (int yy = y1; yy <= y2; yy++)
+				{
+					for (int xx = x1; xx <= x2; xx++)
+					{
+						std::vector <cv::Point2f> &m = grid[yy*grid_width + xx];
+
+						if (m.size())
+						{
+							for (j = 0; j < m.size(); j++)
+							{
+								float dx = x - m[j].x;
+								float dy = y - m[j].y;
+
+								if (dx*dx + dy * dy < minDistance)
+								{
+									good = false;
+									goto break_out;
+								}
+							}
+						}
+					}
+				}
+
+			break_out:
+
+				if (good)
+				{
+					// printf("%d: %d %d -> %d %d, %d, %d -- %d %d %d %d, %d %d, c=%d\n",
+					//    i,x, y, x_cell, y_cell, (int)minDistance, cell_size,x1,y1,x2,y2, grid_width,grid_height,c);
+					grid[y_cell*grid_width + x_cell].push_back(cv::Point2f((float)x, (float)y));
+
+					cv::Point2f p = cv::Point2f((float)x, (float)y);
+					unsigned int pint = ((int)p.x) + ((int)p.y)*image.cols;
+					auto itr2 = point_idx.find(pint);
+					if (itr2 != point_idx.end()) {
+						selectedIdx.push_back(point_idx.at(pint));
+						//					corners.push_back(p);
+						++ncorners;
+					}
+
+
+					if (maxCorners > 0 && (int)ncorners == maxCorners)
+						break;
+				}
+			}
+		}
+		else
+		{
+			for (i = 0; i < total; i++)
+			{
+				int ofs = (int)((const uchar*)tmpCorners[i] - eig.data);
+				int y = (int)(ofs / eig.step);
+				int x = (int)((ofs - y * eig.step) / sizeof(float));
+
+				cv::Point2f p = cv::Point2f((float)x, (float)y);
+				unsigned int pint = ((int)p.x) + ((int)p.y)*image.cols;
+				auto itr2 = point_idx.find(pint);
+				if (itr2 != point_idx.end()) {
+					selectedIdx.push_back(point_idx.at(pint));
+					//					corners.push_back(p);
+					++ncorners;
+				}
+
+				if (maxCorners > 0 && (int)ncorners == maxCorners)
+					break;
+			}
+		}
+		//selectedIdx.clear();
+		//for (int j = 0;j<corners.size();j++) {
+		//	cv::Point2f p = corners.at(j);
+		//	unsigned int pint = ((int)p.x) + ((int)p.y)*image.cols;
+		//	auto itr2 = point_idx.find(pint);
+		//	if (itr2 != point_idx.end()) {
+		//		selectedIdx.push_back(point_idx.at(pint));
+		//	}
+		//}
+
+	}
 
 
 }
+
+
+
