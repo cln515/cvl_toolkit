@@ -57,6 +57,7 @@ namespace cvl_toolkit {
 
 		void panorama_pix2bearing(double u,double v,int imageWidth,int imageHeight,Eigen::Vector3d& ret);
 		void panorama_bearing2pix(Eigen::Vector3d bv,int imageWidth,int imageHeight,double&u,double& v);
+		void xyz2polar(Eigen::Vector3d bv, double&phi, double& theta);
 	};
 
 	bool headString(std::string line, std:: string chara);

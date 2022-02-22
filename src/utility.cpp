@@ -197,6 +197,13 @@ namespace cvl_toolkit {
 			u = (-theta + M_PI)* imageWidth / (M_PI * 2);
 			v = phi / M_PI * imageHeight;
 		}
+		
+		void xyz2polar(Eigen::Vector3d bv, double&phi, double& theta) {
+			double r = bv.norm();
+			theta = atan2(bv(1), bv(0));
+			phi = acos(bv(2) / r);
+		}
+
 	};
 
 	bool headString(std::string line, std::string chara) {
