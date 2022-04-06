@@ -89,7 +89,7 @@ namespace cvl_toolkit {
 		}
 		sort(pids.begin(), pids.end());
 		//using delauney method
-		CvMemStorage* storage = cvCreateMemStorage(0);
+		//CvMemStorage* storage = cvCreateMemStorage(0);
 		cv::Subdiv2D	subdiv;
 		subdiv.initDelaunay(cv::Rect(0, 0, SIDELENGTH, SIDELENGTH));
 
